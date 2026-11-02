@@ -1,0 +1,36 @@
+name: Something isn't working
+description: Tell us what happened on your Linux system.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. **Please check what you paste.** Logs can hold your user name and home folder, so replace them, and never post API keys or tokens.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: In Application > About, or the name of the package you installed.
+      placeholder: 0.2.1-rc.5
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System and desktop
+      placeholder: Ubuntu 24.04, GNOME on Wayland
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log, if it's about an update
+      description: From `~/.local/share/deepseek-harness/logs`. Remove anything personal first.
+      render: text

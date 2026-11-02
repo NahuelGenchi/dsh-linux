@@ -1,0 +1,32 @@
+{
+  "engine": 2,
+  "engineFixes": {
+    "feed": "https://github.com/NahuelGenchi/dsh-linux/releases/download/engine/",
+    "publicKey": "MCowBQYDK2VwAyEApRrvjatYdr73Fn9n0Ww/SknDcrSLHjILW8K6cKw/m+U="
+  },
+  "nodeApiHeaders": "1.5.0",
+  "ptyBuildImage": "ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce31e2c428701f6682bd2fafe15388214",
+  "pythonBuildStandalone": {
+    "3.12.14": "20260901"
+  },
+  "signature": {
+    "appleRootSha256": "B0:B1:73:0E:CB:C7:FF:45:05:14:2C:49:F1:29:5E:6E:DA:6B:CA:ED:7E:2C:68:C5:BE:91:B5:A1:10:01:F0:24",
+    "teamId": "NAN929V4UM",
+    "bundleId": "com.deepseek.dsh"
+  },
+  "hashes": {
+    "@deepseek-ai/libreoffice-kit-wasm@0.1.5": "sha512-V+pu5xJsKhVD4AU1xbFlMWY91svK9ZIC2JsNOph9kWp/arF/KQcuytt76bcbozJqPbE8o0n04lyh0m3QW5RYSA==",
+    "@img/sharp-libvips-linux-x64@1.3.4": "sha512-GJ//SSXbnwSDes02umB3nDJLFcQzw8a18V8fyhqr6tV515tOEMdImjjxj1AoafMRz56F3PHgftnj1QEKSU1zkw==",
+    "@img/sharp-linux-x64@0.35.5": "sha512-SxFtLTeJInhAA9Q836kux2vZNeOBQEx658qvbboZScr0wIARym3IcGmW7KpVD5sbVg0Ojy+udFQdayYIZyoNog==",
+    "@koromix/koffi-linux-x64@3.1.1": "sha512-pyTcX5fePeYbt7TZAwRby69wdlRx3PT+g15ra5IYdat/Pgh3qAKEYeZ+uu7WpPGOy43p/oSRqqZoa2kORzozlA==",
+    "@reflink/reflink-linux-x64-gnu@0.1.19": "sha512-jbI8jvuYCaA3MVUdu8vLoLAFqC+iNMpiSuLbxlAgg7x3K5bsS8nOpTRnkLF7vISJ+rVR8W+7ThXlXlUQ93ulkw==",
+    "@vscode/ripgrep-linux-x64@1.18.0": "sha512-mQ3bVrUpnD2vs7QT0vX90Lt0cnUq467uFtEktIdsJJmW296RoSULRGqWgzG1AKxyBpNDD6l4ZO4qKf6SgyC23Q==",
+    "cpython-3.12.14+20260901-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz": "72748da13197c1fb161e3afeef20a6a385ff24f2165e6e2758e47008e7faba4c",
+    "electron-v44.7.0-linux-x64.zip": "3ae7d5bdad61c664486c6ab61361dd084d064c8c08af8d13a687096e18ce555a",
+    "electron@44.7.0": "sha512-aUq9/zLAAFYc+a9gy6cd0C3Y/N/RmovLCD8TV8LhIzNhuND6HEgsu96jJz9cbAxvckSPv+Trf2PKEjktoZgFkw==",
+    "node-addon-require-builtin-linux-x64-gnu@0.1.9": "sha512-fh3K3/JvBfSYwU8vEOpp4Wdp4N/jX0EnZYq5GsaftlQin1FVqgve/yDNoh+asxBMOQyHOG8F4dXlV1WCierrfg==",
+    "node-api-headers@1.5.0": "sha512-Yi/FgnN8IU/Cd6KeLxyHkylBUvDTsSScT0Tna2zTrz8klmc8qF2ppj6Q1LHsmOueJWhigQwR4cO2p0XBGW5IaQ==",
+    "node-v24.21.0-linux-x64.tar.gz": "6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff",
+    "sherpa-onnx-linux-x64@1.13.8": "sha512-6plnhjagsSeTntCgnlag86hWbs/uZE9Crms1LgOb68/1nKsIQjMd+WG519m+aPwT6TrsBOiEMzrx41t8sL5L5g=="
+  }
+}
