@@ -37,9 +37,10 @@ function evict(directory) {
   if (result.status !== 0) throw new Error(`evict failed: ${result.stderr}`);
 }
 
-/** Every process of this isolated home: those with its HOME, plus all their descendants (Chromium rewrites its own environ). */
+/** Every process of this isolated home: those with its HOME or running from it, plus all their descendants (Chromium rewrites its own environ). */
 function processes() {
   const wanted = `HOME=${home}`;
+  const inHome = `${home}/`;
   const parents = new Map();
   const found = new Set();
   for (const name of readdirSync('/proc')) {
@@ -47,7 +48,7 @@ function processes() {
     try {
       const pid = Number(name);
       parents.set(pid, Number(readFileSync(`/proc/${name}/stat`, 'latin1').match(/\) \S (\d+)/)[1]));
-      if (readFileSync(`/proc/${name}/environ`, 'latin1').split('\0').includes(wanted)) found.add(pid);
+      if (readFileSync(`/proc/${name}/environ`, 'latin1').split('\0').includes(wanted) || readFileSync(`/proc/${name}/cmdline`, 'latin1').includes(inHome)) found.add(pid);
     } catch {}
   }
   for (let grew = true; grew;) {

@@ -1,6 +1,6 @@
 # Testing
 
-Every check below ran on the package itself, unpacked from its `.tar.xz`, one after another. They all pass, apart from one miss that didn't come back, described under [Known limits](#known-limits). The figures are for release `0.2.1-rc.5`, 228.0 MB, with a SHA-256 that starts with `81b691e054e88ed0`.
+Every check below ran on the package itself, unpacked from its `.tar.xz`, one after another. They all pass, apart from one miss that didn't come back, described under [Known limits](#known-limits). The figures are for release `0.2.1-rc.5`, 224.6 MB, with a SHA-256 that starts with `1c6cf8d84f9a5108`.
 
 ## Results
 
@@ -8,14 +8,14 @@ Every check below ran on the package itself, unpacked from its `.tar.xz`, one af
 
 | Measure | Before | Now | Change |
 |---|---|---|---|
-| Package size | 252.6 MB | 228.0 MB | **-9.7%** |
-| Installed size | 1,054 MB | 990 MB | **-6.1%** |
-| Update after the download | 13.5 s | 7.6 s | **-44%** |
+| Package size | 252.6 MB | 224.6 MB | **-11.1%** |
+| Installed size | 1,054 MB | 981 MB | **-6.9%** |
+| Update after the download | 13.5 s | 8.0 s | **-41%** |
 | Disk used by two versions after an update | 2.21 GB | 1.16 GB | **-48%** |
 | `import pandas` | 778 ms | 207 ms | **-73%** |
 | `import docx, pptx, openpyxl` | 570 ms | 185 ms | **-68%** |
 | Cold start to the main window | 1,848 ms | about 1,800 ms | no clear change, runs vary by about 250 ms |
-| Idle memory, 7 processes | 428 MB | 430 MB | no change |
+| Idle memory, 7 processes | 428 MB | 433 MB | no change |
 
 The update figures come from an update to the same release, so everything could be reused. That is the best case. About 3 s of the update goes to the Apple signature check, which needs every file in the release unpacked, and about 1 s goes to starting the new build once to test it.
 
@@ -40,7 +40,11 @@ The update figures come from an update to the same release, so everything could 
 
 | Check | Result |
 |---|---|
-| Every native part | 12 of 12 |
+| Every native part | 12 of 12, with PNG, JPEG, WebP and GIF decoded for real |
+| The agent reading images in the real app | 8 of 8 reach the model, no crash, 0 processes after Ctrl+Q |
+| Damaged images: cut short, random bytes, empty | 5 of 5 refused with a message, process stays up |
+| Images at the app's limits, 64 megapixels | 3 of 3 read, also all at once |
+| 120 reads of one image in one process | Memory levels off, no leak |
 | Agent turn with a stand-in model | Wrote inside the workspace, write outside refused |
 | Word, Excel and PowerPoint rendering | 3 of 3 |
 | Voice, English and Chinese | Both correct |
@@ -84,6 +88,8 @@ Containers block user namespaces, so the app correctly runs there without Chromi
 **Ctrl+Q while an update dialog is open.** The dialog holds the keyboard, so the key does nothing until it is dismissed.
 
 **The agent's sandbox limits writes only.** As on macOS, commands can read your files and reach local services and other apps. [SECURITY.md](../SECURITY.md) says what that means.
+
+**Memory after reading images.** The image library runs as WebAssembly, whose memory only ever grows, so the background process keeps what it used. Over 120 reads it levelled off at about 500 MB with screenshots and 1 GB with 24-megapixel photos. A 24-megapixel photo takes about 0.6 s to read.
 
 **Account name and balance.** A signed-in account can show "Signed in to DeepSeek" instead of a name or email. The sign-in itself is fine, and the label is the app's own fallback for when the profile request fails. The likely cause is the firewall in front of `platform.deepseek.com`, which answered the Linux app's headers with a CloudFront 403, sent with an invalid token. The port doesn't try to get past that firewall, because pretending to be a browser would hide the problem rather than solve it. Models use `api.deepseek.com`, so chatting should not be affected.
 

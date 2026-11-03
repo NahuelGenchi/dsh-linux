@@ -9,7 +9,7 @@ Please don't open a public issue. Use GitHub's [private reporting](https://githu
 | If someone controls... | What stops them |
 |---|---|
 | The download host or the update feed | Every update must carry DeepSeek's real Apple signature, checked against a pinned Apple root certificate, DeepSeek's team ID and the signed list of every file. The version in the feed must match the signed release and be newer than what you run. |
-| A look-alike npm package | Only packages the signed release declares can be picked, and each is verified by npm's SHA-512. The engine unpacks them and never runs their install scripts. |
+| A look-alike npm package | Only packages the signed release declares can be picked, and each is verified by npm's SHA-512. The one package it doesn't name itself, `@emnapi/runtime`, is declared by `sharp`'s WebAssembly build and pinned by hash for each reviewed version. The engine unpacks them and never runs their install scripts. |
 | A download of Electron, Node or Python | Hashes are pinned in [`port/pins.json`](port/pins.json) for each reviewed version. Electron's hash from GitHub must also match the one in its npm package, and a redirect to plain HTTP stops the download. |
 | A crafted archive | The extractors refuse paths outside their folder, links that lead out of the tree, zip bombs and loose file modes. |
 | The engine fix channel | A fix must be signed by the key pinned in the app, carry a higher number than the engine it replaces and match its hash. You can [turn it off](README.md#updates). |

@@ -1,10 +1,10 @@
 # Bugs fixed
 
-20 bugs fixed, 4 of them high severity.
+21 bugs fixed, 5 of them high severity.
 The worst ones stopped the app from starting, or left it stuck with no message.
 The app still behaves like the Windows and macOS builds, apart from what Linux needs.
 
-All regression helpers pass. Bug 16 could not be run because it needs root, and bug 18 is partly verified. Apart from bug 20, which turned up after the first release, these results come from the round of work on bugs alone, and [testing.md](testing.md) has the checks on the current package.
+All regression helpers pass. Bug 16 could not be run because it needs root, and bug 18 is partly verified. Apart from bugs 20 and 21, which turned up after the first release, these results come from the round of work on bugs alone, and [testing.md](testing.md) has the checks on the current package.
 
 ## Bugs
 
@@ -239,6 +239,14 @@ All regression helpers pass. Bug 16 could not be run because it needs root, and 
 
 **How it was checked:** `test/sandbox-reach.mjs` covers what stays blocked and what stays open. On a real desktop, `gh api user` returned the account, Wayland, X11, PipeWire and Docker answered, a Chrome window opened from inside the sandbox, and a page reached a running Chrome.
 
+### 21. Reading an image killed the app
+
+**What:** When the agent read an image or one was attached, the app's background process died and "DeepSeek Harness is unavailable" appeared. `sharp`'s Linux build carries its own copy of GLib, and Electron has the system's loaded already. Some of `sharp`'s calls reached the system's copy with objects made by its own, and jumped to an empty address. There was no error message, only `sharp`'s warning as the last line of the log.
+
+**Why it matters:** Any task that looks at images ended in a crash, and reopening the same task could crash again. An earlier round of testing saw that warning and judged it harmless, because the native check only used a case that happens to survive.
+
+**Fix:** The package now uses `sharp`'s WebAssembly build, which needs nothing from the system, and `sharp` falls back to it by itself when no native build is there. Loading the native build with its own libraries first was tried and crashed in a new way, because Electron replaces `malloc` for the whole process. The native check now reads every image format the app accepts, so a build that crashes this way can't become current, and `test/read-image.sh` runs a real agent turn over images.
+
 ## Not fixed, on purpose
 
 **`SIGTERM` to every process at once.** This is what `systemd` does at logout. The main process ends with Chromium's "GPU process isn't usable. Goodbye." and exit 133, because the helper processes died first. Everything is gone within 3 s, and the next start works with its sessions listed. The old build ends the same way. Changing GPU settings for this is not justified.
@@ -248,8 +256,6 @@ All regression helpers pass. Bug 16 could not be run because it needs root, and 
 **"Unable to create default workspace".** Appears only when `xdg-user-dir DOCUMENTS` is missing or returns the home folder. It is upstream's deliberate rule, and its message says what to do next. With normal user folders it creates `~/Documents/deepseek-harness/default-workspace`.
 
 **One AppArmor rule, one install.** The rule file names a single path, so a second install's setup replaces it. The first install then runs without Chromium's sandbox instead of crashing (bug 1).
-
-**`sharp` warnings.** It prints `[SharpElectronLinux]` and GLib warnings in Node mode on Ubuntu 22.04 and Debian 12. The result is correct: the native check converts a real image on all four systems.
 
 **The package itself is `.tar.xz`.** Unpacking it needs `xz`, and `tar`'s error names it. Desktop systems normally have it, so this stayed.
 

@@ -6,6 +6,8 @@ import { createServer } from 'node:http';
 
 const [port, log] = process.argv.slice(2);
 const COMMAND = process.env.MOCK_COMMAND ?? 'echo inside > inside.txt; cat inside.txt; echo escape > "$HOME/escape-test.txt"; echo "write-outside-exit=$?"; uname -sm';
+// Colon-separated image files to read with the read_image tool, instead of running a command.
+const IMAGES = process.env.MOCK_IMAGES?.split(':').filter(Boolean) ?? [];
 const note = (entry) => appendFileSync(log, `${JSON.stringify(entry)}\n`);
 
 function fill(schema) {
@@ -51,6 +53,9 @@ createServer((req, res) => {
     const tool = (request.tools ?? []).find((entry) => /^(bash|shell|terminal|exec)/i.test(entry.name));
     note({ model: request.model, stream: request.stream, tools: (request.tools ?? []).map((entry) => entry.name), results });
     if (results.length > 0) stream(res, [{ type: 'text', text: 'Mock turn finished.' }], 'end_turn');
+    else if (IMAGES.length > 0 && /run the check/i.test(JSON.stringify(last))) {
+      stream(res, IMAGES.map((path, index) => ({ type: 'tool_use', id: `toolu_image_${index}`, name: 'read_image', input: { file_path: path } })), 'tool_use');
+    }
     else if (tool !== undefined && /run the check/i.test(JSON.stringify(last))) {
       note({ chosen: tool.name, schema: tool.input_schema });
       stream(res, [{ type: 'tool_use', id: 'toolu_mock', name: tool.name, input: fill(tool.input_schema) }], 'tool_use');
