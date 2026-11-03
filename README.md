@@ -122,7 +122,7 @@ Everything above has been tested, and the documents below show how, including wh
 
 ## How it works
 
-[`port/port.mjs`](port/port.mjs) is the whole engine, and each installed copy carries it for its own updates. It checks the release's Apple signature against a pinned root certificate and DeepSeek's team ID, then replaces every package marked macOS-only with the Linux twin the release itself declares, verified by npm's SHA-512. It compiles `node-pty`, adds Electron, Node and Python, verified by their published SHA-256, patches the app, runs a native check and starts the result once in a throwaway home.
+[`port/port.mjs`](port/port.mjs) is the whole engine, and each installed copy carries it for its own updates. It checks the release's Apple signature against a pinned root certificate and DeepSeek's team ID, then replaces every package marked macOS-only with the Linux twin the release itself declares, verified by npm's SHA-512. `sharp` is the one exception: it uses its WebAssembly build, because its Linux build crashes when Electron has the system's GLib loaded. The engine compiles `node-pty`, adds Electron, Node and Python, verified by their published SHA-256, patches the app, runs a native check and starts the result once in a throwaway home.
 
 There are two kinds of patch. Without a required patch the app wouldn't be safe, start, update again or run its tools, so if one no longer fits, the update stops and your version stays. An optional patch only changes how the app looks or behaves day to day, such as the title bar, the tray icon or Ctrl+Q, so a release that moved that code is built without it, and the update log names what was left out.
 

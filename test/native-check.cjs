@@ -21,11 +21,15 @@ const checks = {
   sharp: async () => {
     const sharp = r('sharp');
     const png = await sharp({ create: { width: 64, height: 48, channels: 3, background: '#336699' } }).png().toBuffer();
-    const jpeg = await sharp(png).resize(32, 24).jpeg().toBuffer();
-    const webp = await sharp(jpeg).webp().toBuffer();
-    const { width, format } = await sharp(webp).metadata();
-    if (width !== 32 || format !== 'webp') throw new Error(`converted to ${format} ${width}`);
-    return `${format} ${width}`;
+    const read = [];
+    for (const format of ['png', 'jpeg', 'webp', 'gif']) {
+      const image = await sharp(png)[format]().toBuffer();
+      const { width, format: found } = await sharp(image, { failOn: 'error' }).metadata();
+      const pixels = await sharp(image, { failOn: 'error' }).rotate().resize(32).raw().toBuffer();
+      if (width !== 64 || found !== format || pixels.length === 0) throw new Error(`read ${format} as ${found} ${width}`);
+      read.push(found);
+    }
+    return read.join(' ');
   },
   ripgrep: () => tool(unpacked(r('@vscode/ripgrep').rgPath), ['--version']),
   sherpa: () => typeof r('sherpa-onnx-node').OfflineRecognizer,

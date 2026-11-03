@@ -143,7 +143,7 @@ async function fetchNpmPackage(name, version, destination) {
   if (manifest === null) throw new Error(`npm package ${name}@${version} does not exist`);
   if (manifest.name !== name || manifest.version !== version) throw new Error(`npm answered with ${manifest.name}@${manifest.version} for ${name}@${version}`);
   if (Array.isArray(manifest.os) && !manifest.os.includes('linux')) throw new Error(`npm package ${name}@${version} is not for Linux`);
-  if (Array.isArray(manifest.cpu) && !manifest.cpu.includes(TARGET.arch)) throw new Error(`npm package ${name}@${version} is not for ${TARGET.arch}`);
+  if (Array.isArray(manifest.cpu) && !manifest.cpu.includes(TARGET.arch) && !manifest.cpu.includes('wasm32')) throw new Error(`npm package ${name}@${version} is not for ${TARGET.arch}`);
   const integrity = manifest.dist.integrity;
   if (typeof integrity !== 'string' || !integrity.startsWith('sha512-')) throw new Error(`npm package ${name}@${version} has no sha512 integrity`);
   assertPinned(`${name}@${version}`, integrity);
@@ -224,10 +224,40 @@ async function linuxReplacement(pkg, nodeModules) {
   throw new Error(`No Linux build is published for ${pkg.name}@${pkg.version}.`);
 }
 
+// sharp's Linux build carries its own GLib, and Electron has the system's loaded already. The two get mixed up, so
+// reading an image kills the process without a message. Its WebAssembly build needs nothing from the system.
+const SHARP_NATIVE = /^@img\/sharp-(?:libvips-)?darwin-arm64$/;
+const SHARP_WASM = '@img/sharp-wasm32';
+const EMNAPI = '@emnapi/runtime';
+
+/** sharp falls back to its WebAssembly build by itself when no native build is there. */
+async function installSharpWasm(nodeModules) {
+  const sharp = join(nodeModules, 'sharp');
+  const version = readJson(join(sharp, 'package.json')).version;
+  const loaders = [join(sharp, 'dist', 'sharp.cjs'), join(sharp, 'lib', 'sharp.js')].filter((path) => existsSync(path));
+  // Only the signed release can vouch for a package, so the signed sharp has to name this one.
+  if (!loaders.some((path) => readFileSync(path, 'utf8').includes(`${SHARP_WASM}/sharp.node`))) throw new Error(`sharp ${version} no longer falls back to ${SHARP_WASM}.`);
+  await installNpmPackage(SHARP_WASM, version, join(nodeModules, SHARP_WASM), installedNative(SHARP_WASM, version));
+  const installed = [{ name: SHARP_WASM, version }];
+  if (!existsSync(join(nodeModules, EMNAPI, 'package.json'))) {
+    const wanted = readJson(join(nodeModules, SHARP_WASM, 'package.json')).dependencies?.[EMNAPI]?.match(/^\^?(\d+\.\d+\.\d+)$/)?.[1];
+    if (wanted === undefined) throw new Error(`${SHARP_WASM}@${version} doesn't say which ${EMNAPI} it needs.`);
+    await installNpmPackage(EMNAPI, wanted, join(nodeModules, EMNAPI), installedNative(EMNAPI, wanted));
+    installed.push({ name: EMNAPI, version: wanted });
+  }
+  return installed;
+}
+
 async function swapNativePackages(appRoot) {
   const nodeModules = join(appRoot, 'dsh', 'node_modules');
   const installed = [];
   for (const pkg of darwinPackages(nodeModules)) {
+    if (SHARP_NATIVE.test(pkg.name)) {
+      rmSync(pkg.directory, { recursive: true, force: true });
+      if (!installed.some(({ name }) => name === SHARP_WASM)) installed.push(...await installSharpWasm(nodeModules));
+      note(`${pkg.name}@${pkg.version} -> ${SHARP_WASM}`);
+      continue;
+    }
     const replacement = await linuxReplacement(pkg, nodeModules);
     await installNpmPackage(replacement.name, replacement.version, join(nodeModules, replacement.name), installedNative(replacement.name, replacement.version));
     rmSync(pkg.directory, { recursive: true, force: true });
@@ -537,7 +567,18 @@ const attempt = async (name, fn) => { results[name] = await fn(); };
   });
   await attempt('require-builtin', () => typeof r('node-addon-require-builtin').requireBuiltin);
   await attempt('koffi', () => typeof r('koffi').load);
-  await attempt('sharp', async () => (await r('sharp')({ create: { width: 2, height: 2, channels: 3, background: '#000' } }).png().toBuffer()).length);
+  await attempt('sharp', async () => {
+    // The app reads an image's details and decodes it before anything else, so that is what has to work here.
+    const sharp = r('sharp');
+    const png = await sharp({ create: { width: 32, height: 24, channels: 3, background: '#369' } }).png().toBuffer();
+    for (const format of ['png', 'jpeg', 'webp', 'gif']) {
+      const image = await sharp(png)[format]().toBuffer();
+      const details = await sharp(image, { failOn: 'error' }).metadata();
+      const pixels = await sharp(image, { failOn: 'error' }).rotate().resize(16).raw().toBuffer();
+      if (details.format !== format || details.width !== 32 || pixels.length === 0) throw new Error('sharp read ' + format + ' as ' + details.format + ' ' + details.width);
+    }
+    return true;
+  });
   await attempt('ripgrep', () => {
     const rg = r('@vscode/ripgrep').rgPath.replace('app.asar' + require('node:path').sep, 'app.asar.unpacked' + require('node:path').sep);
     const result = spawnSync(rg, ['--version'], { encoding: 'utf8' });
