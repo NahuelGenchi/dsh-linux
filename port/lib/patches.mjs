@@ -104,24 +104,20 @@ APP_PATCHES['lib/main.js'].push(['child.stdout?.pipe(process.stdout);', `let std
 			for (const line of lines) process.stdout.write(\`\${line.replace(/([?&]token=)[^\\s&]+/gu, "$1hidden")}\\n\`);
 		});`]);
 
-// Hides local services from the commands the agent runs. Landlock cannot hide sockets, bwrap can.
+// Limits only file writes, as macOS's sandbox does, so the agent's commands still reach the desktop, other apps and local services.
 APP_PATCHES['dsh/node_modules/@deepseek-ai/dsh-sandbox-local/lib/index.js'] = [
-  ['import { tmpdir } from "node:os";', 'import { homedir, tmpdir } from "node:os";'],
-  ['function bwrapProfileArgs(policy) {', `function hostServiceMasks() {
-	const args = [];
+  ['linux: ["bwrap", "landlock"],', 'linux: ["landlock", "bwrap"],', OPTIONAL],
+  // Shared memory, terminals and graphics live in /dev. Chrome sets up its own sandbox through /proc.
+  ['const readWrite = ["/dev/null"];\n\tif (policy.mode === "workspace-write") readWrite.push("/tmp", policy.workspaceRoot);',
+    `const readWrite = ["/dev", "/proc", ...writableRoots(policy).filter((root) => existsSync(root))];
 	const runtime = \`/run/user/\${process.getuid()}\`;
-	if (existsSync(runtime)) {
-		args.push("--tmpfs", runtime);
-		const agent = process.env.SSH_AUTH_SOCK;
-		if (agent?.startsWith(\`\${runtime}/\`) && existsSync(agent)) args.push("--bind", agent, agent);
-	}
-	for (const path of ["/run/docker.sock", "/run/podman/podman.sock", "/run/dbus/system_bus_socket", join(homedir(), ".dsh", ".credentials.yaml")]) {
-		if (existsSync(path)) args.push("--ro-bind", "/dev/null", path);
-	}
-	return args;
-}
-function bwrapProfileArgs(policy) {`],
-  ['args.push("--bind", policy.workspaceRoot, policy.workspaceRoot);\n\t}\n\treturn args;', 'args.push("--bind", policy.workspaceRoot, policy.workspaceRoot);\n\t}\n\targs.push(...hostServiceMasks());\n\treturn args;'],
+	if (policy.mode === "workspace-write" && existsSync(runtime)) readWrite.push(runtime);`, OPTIONAL],
+  // Commands find the xdg-open in this folder first. It opens things outside the sandbox, as macOS's open does.
+  ['...runnerArgv,\n\t\t\t\t"--",\n\t\t\t\t...argv',
+    `...runnerArgv,
+				"--",
+				...((opener) => selected.runner === "landlock" && existsSync(opener) ? ["/bin/sh", "-c", 'PATH="$0:$PATH" exec "$@"', opener] : [])(join(fileURLToPath(import.meta.url).split("/app.asar/")[0], "linux-port", "packaging", "sandbox-bin")),
+				...argv`, OPTIONAL],
 ];
 
 // Every run-as-Node launch that stays outside the sandbox passes this flag.

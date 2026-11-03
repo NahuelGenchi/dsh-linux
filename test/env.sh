@@ -8,5 +8,7 @@ export HOME="$run/home" XDG_CONFIG_HOME="$run/home/.config" XDG_DATA_HOME="$run/
 export PATH="$HOME/.local/bin:$PATH" DISPLAY="127.0.0.1:${DSH_TEST_DISPLAY:-99}" ELECTRON_ENABLE_LOGGING=1
 # A machine's AppArmor rule names its real install, not a test copy.
 export ELECTRON_DISABLE_SANDBOX=1
-unset WAYLAND_DISPLAY NODE_OPTIONS XDG_SESSION_TYPE DBUS_SESSION_BUS_ADDRESS
+unset WAYLAND_DISPLAY NODE_OPTIONS XDG_SESSION_TYPE
+# With no address, programs find the real session's bus by themselves, and test popups reach the desktop.
+export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent
 exec aa-exec -p unconfined -- "$@"

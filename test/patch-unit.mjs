@@ -93,7 +93,7 @@ for (const master of ['Menu.setApplicationMenu(Menu.buildFromTemplate(process.pl
   result = attempt(master, menu);
   check('the menu patch fits the code on DeepSeek\'s main branch', result.text?.includes('[...windowsDevToolsShortcuts, { role: "quit", visible: false }]') && result.skipped.length === 0, result.skipped[0] ?? '');
 }
-const safety = required.filter(({ patch }) => /--disable-sigusr1|hostServiceMasks|token=|linux-updater|unsupported platform/u.test(String(patch[1])));
+const safety = required.filter(({ patch }) => /--disable-sigusr1|token=|linux-updater|unsupported platform/u.test(String(patch[1])));
 check('patches that keep the app safe or updatable stay required', safety.length >= 8, `${safety.length} of them`);
 
 rmSync(scratchDir, { recursive: true, force: true });

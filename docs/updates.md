@@ -18,7 +18,7 @@ This can't promise that every future release will work. It makes failures rarer,
 
 ### Two kinds of patch
 
-A required patch keeps the app safe, startable or updatable, or keeps its tools running. Without one, the update stops and the current version stays. The 19 required patches cover the updater hook, the token scrub, the sandbox masks and the Landlock launcher, among others.
+A required patch keeps the app safe, startable or updatable, or keeps its tools running. Without one, the update stops and the current version stays. The 16 required patches cover the updater hook, the token scrub and the Landlock launcher, among others.
 
 An optional patch only changes how the app looks or behaves day to day, such as the title bar, the tray icon or Ctrl+Q. If DeepSeek moved that code, the build goes on without it, and the update log and `port-info.json` name what was left out. A package build still stops at any miss, so a new package always has them all.
 
