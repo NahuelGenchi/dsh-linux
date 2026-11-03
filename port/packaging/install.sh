@@ -101,11 +101,6 @@ if grep -q '@{HOME}' /etc/apparmor.d/deepseek-harness 2>/dev/null; then
   echo "Your sandbox rule comes from an older version and covers every user on this machine. To narrow it: sudo sh \"$root/setup-sandbox.sh\""
 fi
 
-if ! command -v bwrap >/dev/null 2>&1; then
-  echo
-  echo "Tip: install the bubblewrap package. The agent's sandbox then also hides local services such as systemd and Docker from the commands it runs."
-fi
-
 command -v xdg-open >/dev/null 2>&1 || echo "Note: without the xdg-utils package, links and sign-in cannot open your browser."
 echo
 echo "Done. Open DeepSeek Harness from your app menu, or run: $root/deepseek-harness"

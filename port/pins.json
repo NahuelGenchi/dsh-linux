@@ -1,5 +1,5 @@
 {
-  "engine": 2,
+  "engine": 3,
   "engineFixes": {
     "feed": "https://github.com/NahuelGenchi/dsh-linux/releases/download/engine/",
     "publicKey": "MCowBQYDK2VwAyEApRrvjatYdr73Fn9n0Ww/SknDcrSLHjILW8K6cKw/m+U="

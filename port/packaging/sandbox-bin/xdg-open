@@ -1,0 +1,27 @@
+#!/bin/sh
+# The agent's commands find this before the real xdg-open. It opens things outside the agent's
+# sandbox, as macOS's open does, so the app that opens can still save its own settings.
+here=$(dirname -- "$(readlink -f -- "$0")")
+rest=$PATH
+PATH=
+while [ -n "$rest" ]; do
+  dir=${rest%%:*}
+  case "$rest" in
+    *:*) rest=${rest#*:} ;;
+    *) rest= ;;
+  esac
+  [ "$dir" = "$here" ] || PATH=${PATH:+$PATH:}$dir
+done
+export PATH
+real=$(command -v xdg-open) || {
+  echo "xdg-open: not installed" >&2
+  exit 127
+}
+# KillMode=process keeps the opened app running when xdg-open itself ends.
+if command -v systemd-run >/dev/null 2>&1 && systemd-run --user --quiet --collect --wait --property=KillMode=process \
+  --working-directory="$PWD" --setenv=PATH --setenv=DISPLAY --setenv=WAYLAND_DISPLAY --setenv=XAUTHORITY \
+  --setenv=DBUS_SESSION_BUS_ADDRESS --setenv=XDG_CURRENT_DESKTOP --setenv=XDG_SESSION_TYPE --setenv=XDG_DATA_DIRS --setenv=BROWSER \
+  -- "$real" "$@" 2>/dev/null; then
+  exit 0
+fi
+exec "$real" "$@"

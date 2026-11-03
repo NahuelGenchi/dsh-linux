@@ -15,7 +15,7 @@ Please don't open a public issue. Use GitHub's [private reporting](https://githu
 | The engine fix channel | A fix must be signed by the key pinned in the app, carry a higher number than the engine it replaces and match its hash. You can [turn it off](README.md#updates). |
 | Another account on your machine | Scripts set their own file modes, and logs and staging folders are private to you. The AppArmor rule names this one install. |
 | A web page with a `dsh://` link | The app only focuses its window, and ignores anything the link tries to pass along. |
-| A bad command from the agent | Writes outside the workspace are blocked, and debug entry points are closed. With `bubblewrap` installed, local services are hidden too. |
+| A bad command from the agent | Writes outside the workspace are blocked, and debug entry points are closed. |
 
 ## What it can't protect you from
 
@@ -23,11 +23,9 @@ Please don't open a public issue. Use GitHub's [private reporting](https://githu
 
 **A stolen signing key.** If DeepSeek's Apple key or this project's engine key were stolen, the signatures would still check out. Apple's revocation list isn't checked, because that needs Apple's servers.
 
-**Running without `bubblewrap`.** Landlock has no rule for sockets, so commands in the agent's sandbox can still reach local services. Installing `bubblewrap` closes this.
-
 **The AppArmor rule's path.** In-app updates need the install folder to be writable by you, so your other programs could claim the rule. That weakens Ubuntu's user namespace restriction for your account only.
 
-**Reads and network inside the sandbox.** Commands can read your files and reach the network. That is DeepSeek's stated design, and the port keeps it.
+**A sandbox that only limits writes.** As on macOS, the agent's sandbox limits file writes and nothing else. Commands can read your files, reach the network, use your `gh` login and keyring, and talk to Docker, systemd and other apps. A command that really wants out can get out, for example by asking systemd to run something, so use a virtual machine if you need a harder wall. On kernels older than 6.2, Landlock also misses some writes, such as emptying a file with `truncate`.
 
 **An old version kept on offer.** A feed can keep offering an old release. The app refuses a downgrade, but it can't tell that a newer one exists.
 

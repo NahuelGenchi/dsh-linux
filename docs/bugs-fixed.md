@@ -1,10 +1,10 @@
 # Bugs fixed
 
-19 bugs fixed, 4 of them high severity.
+20 bugs fixed, 4 of them high severity.
 The worst ones stopped the app from starting, or left it stuck with no message.
 The app still behaves like the Windows and macOS builds, apart from what Linux needs.
 
-All regression helpers pass. Bug 16 could not be run because it needs root, and bug 18 is partly verified. These results come from the round of work on bugs alone, and [testing.md](testing.md) has the checks on the current package.
+All regression helpers pass. Bug 16 could not be run because it needs root, and bug 18 is partly verified. Apart from bug 20, which turned up after the first release, these results come from the round of work on bugs alone, and [testing.md](testing.md) has the checks on the current package.
 
 ## Bugs
 
@@ -29,6 +29,7 @@ All regression helpers pass. Bug 16 could not be run because it needs root, and 
 | 17 | Background notice promises a tray icon many desktops do not show | Low | Fixed | Seen on a display with no tray |
 | 18 | Updates need a system `xz` program, which some systems lack | Low | Fixed, partly verified | `tar` failure shown, full update with no `xz` not run |
 | 19 | No `xdg-open`: no warning that links will not open | Low | Fixed | Note seen in containers |
+| 20 | With `bubblewrap` installed, the agent's commands are cut off from the desktop, sound, other apps and a `gh` login kept in the keyring | High | Fixed | `test/sandbox-reach.mjs`, plus a real desktop |
 
 ## High severity
 
@@ -226,6 +227,18 @@ All regression helpers pass. Bug 16 could not be run because it needs root, and 
 
 **How it was checked:** Note seen in containers without it.
 
+## Found after the first release
+
+### 20. Agent's commands cut off from the desktop
+
+**What:** With `bubblewrap` installed, commands ran with a private `/tmp`, a bare `/dev` and no view of other processes. A patch from this port also hid the session's runtime folder. So `gh` said "Requires authentication", Chrome wouldn't start, and there was no display or sound. On macOS, the same sandbox limits file writes and nothing else.
+
+**Why it matters:** Anything that needs the desktop failed on Linux and worked on macOS, with messages that pointed at the wrong thing.
+
+**What changed:** The app now picks Landlock first, and lets commands write to the workspace, temporary folders, `/dev`, `/proc` and the runtime folder. The hiding patch is gone, and `xdg-open` runs outside the sandbox, as `open` does on macOS. `bubblewrap` is only the fallback for kernels without Landlock.
+
+**How it was checked:** `test/sandbox-reach.mjs` covers what stays blocked and what stays open. On a real desktop, `gh api user` returned the account, Wayland, X11, PipeWire and Docker answered, a Chrome window opened from inside the sandbox, and a page reached a running Chrome.
+
 ## Not fixed, on purpose
 
 **`SIGTERM` to every process at once.** This is what `systemd` does at logout. The main process ends with Chromium's "GPU process isn't usable. Goodbye." and exit 133, because the helper processes died first. Everything is gone within 3 s, and the next start works with its sessions listed. The old build ends the same way. Changing GPU settings for this is not justified.
@@ -246,7 +259,7 @@ All regression helpers pass. Bug 16 could not be run because it needs root, and 
 - Tray on a stand-in host (`test/tray-host.py`): tooltip, icon, Open and Quit menu, activate reopens, Quit exits 0.
 - Package scan: no Mach-O files and no non-x64 ELF files. The 8 Windows executables are vendored inside pip and pnpm.
 - Workspace with spaces and non-ASCII letters; `load_workspace_dependencies`; Python, Node and pnpm in the runtime.
-- No `bwrap`, on Ubuntu 24.04: a write outside the workspace is denied by Landlock. Landlock cannot hide local services, so `bwrap` is still needed for that.
+- No `bwrap`, on Ubuntu 24.04: a write outside the workspace is denied by Landlock.
 - Sign-in opens `platform.deepseek.com/dsh/authorize` (stub browser). The feedback link, configuration file and shortcuts page work, with Ctrl shown.
 - Simulated file drop with a space and an accent in the name attaches correctly.
 - Wayland on a private headless compositor at 2x, and X11 at 1.5x: title bar, overlay and menus fine.

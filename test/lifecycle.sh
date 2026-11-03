@@ -14,7 +14,7 @@ fails=0
 
 cdp() { TARGET_MATCH=$1 timeout 8 node test/cdp.mjs "$port" eval "$2" 2>/dev/null; }
 alive() { ps -eo pid,args | grep -F ".work/$run/" | grep -v shell-snapshots | grep -vE '^ *[0-9]+ (sed|grep|cut|awk|ps|tail) ' | grep -v 'test/lifecycle' | awk '{print $1}'; }
-main_pid() { ps -eo pid,args | grep -F "/current/deepseek-harness" | grep -F ".work/$run/" | grep -v -- '--type=' | grep -v -- '--expose-internals' | grep -v shell-snapshots | awk 'NR==1{print $1}'; }
+main_pid() { ps -eo pid,args | grep -E "/(current|versions/[^/]+)/deepseek-harness( |$)" | grep -F ".work/$run/" | grep -v -- '--type=' | grep -v -- '--expose-internals' | grep -v shell-snapshots | awk 'NR==1{print $1}'; }
 report() { if [ "$2" = yes ]; then echo "PASS $1: $3"; else echo "FAIL $1: $3"; fails=$((fails + 1)); fi; }
 stop_all() {
   pids=$(alive); [ -n "$pids" ] && kill $pids 2>/dev/null

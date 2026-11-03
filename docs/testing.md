@@ -1,6 +1,6 @@
 # Testing
 
-Every check below ran on the package itself, unpacked from its `.tar.xz`, one after another. They all pass, apart from one miss that didn't come back, described under [Known limits](#known-limits). The figures are for release `0.2.1-rc.5`, 228.0 MB, with a SHA-256 that starts with `0badbf53bc71fc51`.
+Every check below ran on the package itself, unpacked from its `.tar.xz`, one after another. They all pass, apart from one miss that didn't come back, described under [Known limits](#known-limits). The figures are for release `0.2.1-rc.5`, 228.0 MB, with a SHA-256 that starts with `81b691e054e88ed0`.
 
 ## Results
 
@@ -31,7 +31,9 @@ The update figures come from an update to the same release, so everything could 
 | Tampered release through the in-app update | 2 of 2 refused, current version kept |
 | npm look-alike package | Declared package picked |
 | Which sandbox rules are accepted | 8 of 8 correct |
-| Agent sandbox, with bubblewrap | Write outside blocked, local services hidden |
+| Agent sandbox | Writes outside blocked, also through links and `/proc`. Display, sound, other processes, local services and a real `gh` login all reachable |
+| A browser under the agent's sandbox | Chrome keeps its own sandbox on and opens a window, and a page reaches a running Chrome |
+| `xdg-open` under the agent's sandbox | What it opens runs outside the sandbox and keeps running |
 | Package contents | No user name or email, all files owned by root, no setuid, nothing writable by others |
 
 ## The app
@@ -81,7 +83,7 @@ Containers block user namespaces, so the app correctly runs there without Chromi
 
 **Ctrl+Q while an update dialog is open.** The dialog holds the keyboard, so the key does nothing until it is dismissed.
 
-**Without bubblewrap.** Landlock has no rule for sockets, so commands in the agent's sandbox can still reach local services. The installer suggests bubblewrap.
+**The agent's sandbox limits writes only.** As on macOS, commands can read your files and reach local services and other apps. [SECURITY.md](../SECURITY.md) says what that means.
 
 **Account name and balance.** A signed-in account can show "Signed in to DeepSeek" instead of a name or email. The sign-in itself is fine, and the label is the app's own fallback for when the profile request fails. The likely cause is the firewall in front of `platform.deepseek.com`, which answered the Linux app's headers with a CloudFront 403, sent with an invalid token. The port doesn't try to get past that firewall, because pretending to be a browser would hide the problem rather than solve it. Models use `api.deepseek.com`, so chatting should not be affected.
 

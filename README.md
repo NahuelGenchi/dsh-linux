@@ -62,8 +62,6 @@ On Ubuntu 23.10 and newer, Chromium's sandbox needs an AppArmor rule that names 
 sudo sh ~/.local/share/deepseek-harness/setup-sandbox.sh
 ```
 
-Installing the `bubblewrap` package is also worth it. The agent's sandbox then hides local services such as systemd and Docker from the commands it runs.
-
 ## What makes it different
 
 Other Linux projects around DeepSeek Harness wrap its web interface or build it from source. This one takes another road. It starts from DeepSeek's own macOS release, checks DeepSeek's Apple signature, and swaps the macOS parts for the official Linux builds of the same components: Electron, Node, Python and the native modules.
@@ -98,7 +96,7 @@ The whole story, including what this can't promise, is in [docs/updates.md](docs
 
 **How the app names itself.** Update checks reach the server as `desktop-mac`, because the app reports that for every system except Windows, and Linux needs the update notices for the macOS releases. Account requests go out as `web`, because the app only names macOS and Windows there.
 
-**Without `bubblewrap`,** commands in the agent's sandbox can still reach Docker, systemd and the keyring, since Landlock has no rule for sockets. With it, they can't.
+**The agent's sandbox works as on macOS.** In Workspace Write, commands can only write to the workspace and temporary folders. Everything else stays open to them: your files to read, the network, your `gh` login, the desktop, sound and other apps. `xdg-open` opens things outside the sandbox, as `open` does on macOS, and **Full access** in the same menu turns the sandbox off. On a kernel without Landlock, the app falls back to `bubblewrap`, which cuts commands off from the desktop.
 
 **Tested on x86-64 only.** It runs on Ubuntu 22.04, 24.04 and 26.04, Debian 12 and Fedora 44. The Office engine is DeepSeek's official WASM build, since it publishes no native Linux one.
 
